@@ -1,0 +1,441 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+---
+title: "DSCC/CSC/STAT 462 Assignment 4"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+subtitle: Due November 16, 2023 by 11:59 p.m.
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval=T,tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+```{r}
+# population
+population_df <- read.csv("D:/Stats Project/Billionaires Statistics Dataset.csv")
+
+# random sample
+set.seed(123)
+sample_df <- population_df[sample(nrow(population_df), 1500), ]
+# reset index
+sample_df$index <- seq_len(nrow(sample_df))
+rownames(sample_df) <- NULL
+```
+
+1. Is average final worth of inherited billionaires equal to the average final worth of self-made billionaires.
+
+$H_0$ : $\mu_1 = \mu_2$
+$H_1$ : $\mu_1 \neq \mu_2$
+$\alpha = 0.05$
+
+```{r}
+split_df_1 <- split(sample_df, sample_df$selfMade)
+split_df_1p <- split(population_df, population_df$selfMade)
+
+x_1 <- c(split_df_1$True$finalWorth)
+y_1 <- c(split_df_1$False$finalWorth)
+
+t.test(x_1, y_1, paired=F, conf.level=0.95)
+
+mean_x_11 <- mean(split_df_1p$True$finalWorth)
+mean_x_12 <- mean(split_df_1p$False$finalWorth)
+
+cat("Population mean final worth of self-made billionaires is", mean_x_11)
+cat("\nPopulation mean final worth of inherited billionaires is", mean_x_12)
+cat("\ndifference in population mean is", mean_x_11 - mean_x_12)
+```
+Since $p > \alpha$, we fail to reject. We don't have sufficient evidence to conclude that the average final net worth of self made billionaires and inherited billionaires is significantly different.
+$\\$
+With 95% confidence interval we can say that our true difference in mean will lie between (-2247.064, 371.824).
+$\\$
+True difference in population means is -505.0133, which certainly lies in our confidence interval found above.
+$\\$
+$\\$
+
+2. Is average age of billionaires in USA equal to the average age of billionaires in China.
+
+$H_0$ : $\mu_1 = \mu_2$
+$H_1$ : $\mu_1 \neq \mu_2$
+$\alpha = 0.05$
+
+```{r}
+split_df_2 <- split(sample_df, sample_df$country)
+split_df_2p <- split(population_df, population_df$country)
+
+x_2 <- na.omit(c(split_df_2$`United States`$age))
+y_2 <- na.omit(c(split_df_2$China$age))
+
+t.test(x_2, y_2, paired=F, conf.level=0.95)
+
+mean_x_21 <- mean(split_df_2p$`United States`$age, na.rm = TRUE)
+mean_x_22 <- mean(split_df_2p$China$age, na.rm = TRUE)
+
+cat("Population mean age of billionaires in USA is", mean_x_21)
+cat("\nPopulation mean age of billionaires in China is", mean_x_22)
+cat("\ndifference in population mean is", mean_x_21 - mean_x_22)
+
+```
+
+Since $p << \alpha$, we reject. We have sufficient evidence to conclude that the average age of billionaires in USA and billionaires in China is significantly different.
+$\\$
+With 95% confidence interval we can say that our true difference in mean will lie between (6.001081, 9.318364).
+$\\$
+True difference in population means is 8.609937, which certainly lies in our confidence interval found above.
+$\\$
+$\\$
+
+3. Is the variance in the final net worth of self-made billionaires less than the variance in the final net worth of inherited billionaires.
+
+$H_0$ : $\sigma_1^2 \geq \sigma_2^2$
+$H_1$ : $\sigma_1^2 < \sigma_2^2$
+$\alpha = 0.05$
+
+```{r}
+split_df_3 <- split(sample_df, sample_df$selfMade)
+split_df_3p <- split(population_df, population_df$selfMade)
+
+x_3 <- c(split_df_3$True$finalWorth)
+y_3 <- c(split_df_3$False$finalWorth)
+
+var.test(x_3, y_3, alt="less", conf.level=0.95)
+
+var_x_31 <- var(split_df_3p$True$finalWorth)
+var_x_32 <- var(split_df_3p$False$finalWorth)
+
+cat("Population variance of final worth of self-made billionaires is", var_x_31)
+cat("\nPopulation variance of final worth of inherited billionaires is", var_x_32)
+cat("\nratio of variances is", var_x_31/var_x_32)
+```
+
+Since $p << \alpha$, we reject. We have sufficient evidence to conclude that the variance in the final worth of self-made billionaires is less than the variance in final worth of inherited billionaires.
+$\\$
+With 95% confidence interval we can say that our true ratio of variances will lie between (0.0000000, 0.6708215).
+$\\$
+True ratio of variances in population is 0.7935557, which lies outside our 95% confidence interval found above, which means that we need a more precise confidence interval(i.e, even lower $\alpha$) to contain the true ratio of variances.
+$\\$
+$\\$
+
+4.Inference for correlation on GDP of the billionaire's country and their final worth.
+
+$H_0$ : $\rho = 0$
+$H_1$ : $\rho \neq 0$
+$\alpha = 0.05$
+
+```{r}
+string_to_numeric <- function(x) as.numeric(gsub("[^0-9.]", "", x))
+
+x_4_ <- sapply(c(sample_df$gdp_country), string_to_numeric)
+y_4_ <- c(sample_df$finalWorth)
+
+complete_cases_41 <- complete.cases(x_4_, y_4_)
+
+x_4 <- x_4_[complete_cases_41]
+y_4 <- y_4_[complete_cases_41]
+
+cor.test(x_4,y_4)
+
+x_41_ <- sapply(c(population_df$gdp_country), string_to_numeric)
+y_41_ <- c(population_df$finalWorth)
+
+complete_cases_42 <- complete.cases(x_41_, y_41_)
+
+x_41 <- x_41_[complete_cases_42]
+y_41 <- y_41_[complete_cases_42]
+
+cat("Population correlation between GDP of Country and final worth is", cor(x_41,y_41))
+```
+
+Since $p > \alpha$, we fail to reject. We don't have sufficient evidence to conclude that the GDP of Billionaire's country and their final worth are linearly correlated.
+$\\$
+With 95% confidence interval we can say that our true correlation will lie between (-0.03003413, 0.07406551).
+$\\$
+True correlation in population is 0.03758884, which certainly lies in our confidence interval found above.
+$\\$
+$\\$
+
+5. Is proportion of self-made billionaires in eastern countries equal to the proportion of self-made billionaires in western countries.
+
+$H_0$ : $p_1 = p_2$
+$H_1$ : $p_1 \neq p_2$
+$\alpha = 0.05$
+
+```{r}
+split_df_5 <- split(sample_df, sample_df$continent)
+split_df_5p <- split(population_df, population_df$continent)
+
+n_eastern_5 = length(split_df_5$Asia$selfMade) + length(split_df_5$Africa$selfMade)
+n_western_5 = length(split_df_5$Europe$selfMade) + length(split_df_5$`North America`$selfMade) + length(split_df_5$Oceania$selfMade) + length(split_df_5$`South America`$selfMade)
+
+x_eastern_5 <- length(split_df_5$Africa$selfMade[split_df_5$Africa$selfMade == "True"]) + length(split_df_5$Asia$selfMade[split_df_5$Asia$selfMade == "True"])
+x_western_5 <- length(split_df_5$Europe$selfMade[split_df_5$Europe$selfMade == "True"]) + length(split_df_5$`North America`$selfMade[split_df_5$`North America`$selfMade == "True"]) + length(split_df_5$Oceania$selfMade[split_df_5$Oceania$selfMade == "True"]) + length(split_df_5$`South America`$selfMade[split_df_5$`South America`$selfMade == "True"])
+
+prop.test(c(x_eastern_5, x_western_5), c(n_eastern_5, n_western_5), conf.level = 0.95, correct = F)
+
+n_eastern_5p = length(split_df_5p$Asia$selfMade) + length(split_df_5p$Africa$selfMade)
+n_western_5p = length(split_df_5p$Europe$selfMade) + length(split_df_5p$`North America`$selfMade) + length(split_df_5p$Oceania$selfMade) + length(split_df_5p$`South America`$selfMade)
+
+x_eastern_5p <- length(split_df_5p$Africa$selfMade[split_df_5p$Africa$selfMade == "True"]) + length(split_df_5p$Asia$selfMade[split_df_5p$Asia$selfMade == "True"])
+x_western_5p <- length(split_df_5p$Europe$selfMade[split_df_5p$Europe$selfMade == "True"]) + length(split_df_5p$`North America`$selfMade[split_df_5p$`North America`$selfMade == "True"]) + length(split_df_5p$Oceania$selfMade[split_df_5p$Oceania$selfMade == "True"]) + length(split_df_5p$`South America`$selfMade[split_df_5p$`South America`$selfMade == "True"])
+
+p_eastern = x_eastern_5p/n_eastern_5p
+p_western = x_western_5p/n_western_5p
+
+p_eastern
+p_western
+cat("Difference of population proportions is ", p_eastern-p_western)
+```
+Since $p << \alpha$, we reject. We have sufficient evidence to conclude that the proportions of self-made billionaires in eastern countries is significantly different from the proportion of self-made billionaires in western countries.
+$\\$
+with 95% confidence interval, we can say that the difference in the population proportions will lie between (0.09625292 , 0.18829258)
+$\\$
+True difference in population proportions is 0.1183536 which certainly lies in the confidence interval. Moreover we can see that the confidence interval and the hypothesis test are consistent with each other.(Not contradicting each other)
+$\\$
+$\\$
+
+6. One-way ANOVA based on continent of origin, to check if the average final worth of the billionaires is equal in each continent.
+
+```{r}
+library(ggplot2)
+
+random_colors <- sample(colors(), 6)
+
+# Create side-by-side boxplots with random colors using ggplot2
+ggplot(sample_df, aes(x = sample_df$continent, y = sample_df$finalWorth, fill = sample_df$continent)) +
+  geom_boxplot() +
+  labs(title = "Side-by-Side Boxplots of final worth", x = "Continent", y = "Final Worth") +
+  scale_fill_manual(values = random_colors)
+```
+
+From side-by-side boxplots of final worth, we can see that the variances of final worth for different continents are drastically different. So, we can't use parametric ANOVA. We will use Non-parametric ANOVA for this question.
+$\\$
+$H_0 : \eta_1 = \eta_2 = \eta_3 = ..... = \eta_6$
+$H_1 : H_0^c$
+$\alpha = 0.05$
+
+```{r}
+categories_6 <- sample_df$continent
+values_6 <- sample_df$finalWorth
+
+kruskal.test(values_6~categories_6, sample_df)
+```
+Since $p << \alpha$, we reject the null hypothesis. Now we use Dunn's test for post-hoc analysis.
+$\\$
+According to bonferroni correction,
+$\alpha^* = \dfrac{\alpha}{\binom{6}{2}} = 0.00333$
+
+```{r}
+library(dunn.test)
+dunn.test(values_6, categories_6, method = "bonferroni")
+```
+The pairwise comparisons of Asia-Europe and Asia-North America are the ones where $p < \alpha$, therefore we reject the null hypothesis for those pairs. We have sufficient evidence to say that$\\$ i) The median final worth of billionaires in Asia and the median final worth of the billionaires in Europe are significantly different.$\\$ ii) The median final worth of billionaires in Asia and the median final worth of the billionaires in North America are significantly different.
+
+7. One-way ANOVA based on the continent of origin to check if the average age is the same in all continents or not.
+
+```{r}
+library(ggplot2)
+
+random_colors <- sample(colors(), 18)
+
+# Create side-by-side boxplots with random colors using ggplot2
+ggplot(sample_df, aes(x = sample_df$continent, y = sample_df$age, fill = sample_df$continent)) +
+  geom_boxplot() +
+  labs(title = "Side-by-Side Boxplots of age", x = "Continent", y = "Age") +
+  scale_fill_manual(values = random_colors)
+```
+The equal variance assumptions looks reasonable here.
+
+```{r}
+split_df_7 <- split(sample_df, sample_df$continent)
+
+africa_7 <- split_df_7$Africa$age
+ggplot(data = data.frame(Category = africa_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of African billionaires", x = "Age", y = "Frequency")
+
+asia_7 <- split_df_7$Asia$age
+ggplot(data = data.frame(Category = asia_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of Asian billionaires", x = "Age", y = "Frequency")
+
+Europe_7 <- split_df_7$Europe$age
+ggplot(data = data.frame(Category = Europe_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of Europian billionaires", x = "Age", y = "Frequency")
+
+NorthAmerica_7 <- split_df_7$`North America`$age
+ggplot(data = data.frame(Category = NorthAmerica_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of North American billionaires", x = "Age", y = "Frequency")
+
+Oceania_7 <- split_df_7$Oceania$age
+ggplot(data = data.frame(Category = Oceania_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of Oceania billionaires", x = "Age", y = "Frequency")
+
+SouthAmerica_7 <- split_df_7$`South America`$age
+ggplot(data = data.frame(Category = SouthAmerica_7), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of South American billionaires", x = "Age", y = "Frequency")
+```
+Each group follows a reasonably normal distribution as well. The observations in each group are independent as well.
+$\\$
+$H_0 : \mu_1 = \mu_2 = .... = \mu_6$
+$H_1 : H_0^c$
+$\alpha = 0.05$
+
+```{r}
+fit_7 <- aov(sample_df$age~sample_df$continent)
+summary(fit_7)
+```
+Since $p < \alpha$, we reject the null hypothesis. We have sufficient evidence to conclude that at least one of the equalities in the null hypothesis doesn't hold. Now we use post-hoc analysis for further investigation with bonferroni correction.
+$\\$
+$\alpha^* = \dfrac{\alpha}{\binom{6}{2}} = 0.00333$
+
+```{r}
+pairwise.t.test(sample_df$age, sample_df$continent, p.adj = "bonferroni")
+```
+From pairwise comparisons, we can see that $p < \alpha$ only for the pair Asia-North America, which means that we have sufficient evidence to conclude that the average age of billionaires in Asia and the average age of billionaires in North America are significantly different.
+$\\$
+$\\$
+
+
+8. One-way ANOVA based on industries to check if the average age of billionaires across industries are the same.
+
+```{r}
+library(ggplot2)
+
+random_colors <- sample(colors(), 18)
+
+# Create side-by-side boxplots with random colors using ggplot2
+ggplot(sample_df, aes(x = sample_df$industries, y = sample_df$age, fill = sample_df$industries)) +
+  geom_boxplot() +
+  labs(title = "Side-by-Side Boxplots of age", x = "Industry", y = "age") +
+  scale_fill_manual(values = random_colors)
+```
+
+The equal variance assumptions looks reasonable here.
+
+```{r}
+split_df_8 <- split(sample_df, sample_df$industries)
+
+Automotive_8 <- split_df_8$Automotive$age
+ggplot(data = data.frame(Category = Automotive_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Automotive industry", x = "Age", y = "Frequency")
+
+Construction_Engineering_8 <- split_df_8$`Construction & Engineering`$age
+ggplot(data = data.frame(Category = Construction_Engineering_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Construction & Engineering industry", x = "Age", y = "Frequency")
+
+Diversified_8 <- split_df_8$Diversified$age
+ggplot(data = data.frame(Category = Diversified_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Diverse industry", x = "Age", y = "Frequency")
+
+Energy_8 <- split_df_8$Energy$age
+ggplot(data = data.frame(Category = Energy_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in energy industry", x = "Age", y = "Frequency")
+
+Fashion_Retail_8 <- split_df_8$`Fashion & Retail`$age
+ggplot(data = data.frame(Category = Fashion_Retail_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Fashion & Retail industry", x = "Age", y = "Frequency")
+
+Finance_Investments_8 <- split_df_8$`Finance & Investments`$age
+ggplot(data = data.frame(Category = Finance_Investments_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Finance & Investments industry", x = "Age", y = "Frequency")
+
+Food_Beverage_8 <- split_df_8$`Food & Beverage`$age
+ggplot(data = data.frame(Category = Food_Beverage_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Food & Beverage industry", x = "Age", y = "Frequency")
+
+Gambling_Casinos_8 <- split_df_8$`Gambling & Casinos`$age
+ggplot(data = data.frame(Category = Gambling_Casinos_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Gambling & Casinos industry", x = "Age", y = "Frequency")
+
+Healthcare_8 <- split_df_8$Healthcare$age
+ggplot(data = data.frame(Category = Healthcare_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Healthcare industry", x = "Age", y = "Frequency")
+
+Logistics_8 <- split_df_8$Logistics$age
+ggplot(data = data.frame(Category = Logistics_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Logistics industry", x = "Age", y = "Frequency")
+
+Manufacturing_8 <- split_df_8$Manufacturing$age
+ggplot(data = data.frame(Category = Manufacturing_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Manufacturing industry", x = "Age", y = "Frequency")
+
+Media_Entertainment_8 <- split_df_8$`Media & Entertainment`$age
+ggplot(data = data.frame(Category = Media_Entertainment_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Media & Entertainment industry", x = "Age", y = "Frequency")
+
+Metals_Mining_8 <- split_df_8$`Metals & Mining`$age
+ggplot(data = data.frame(Category = Metals_Mining_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Metals & Mining industry", x = "Age", y = "Frequency")
+
+Real_Estate_8 <- split_df_8$`Real Estate`$age
+ggplot(data = data.frame(Category = Real_Estate_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Real Estate industry", x = "Age", y = "Frequency")
+
+Service_8 <- split_df_8$Service$age
+ggplot(data = data.frame(Category = Service_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Service industry", x = "Age", y = "Frequency")
+
+Sports_8 <- split_df_8$Sports$age
+ggplot(data = data.frame(Category = Sports_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Sports industry", x = "Age", y = "Frequency")
+
+Technology_8 <- split_df_8$Technology$age
+ggplot(data = data.frame(Category = Technology_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Technology industry", x = "Age", y = "Frequency")
+
+Telecom_8 <- split_df_8$Telecom$age
+ggplot(data = data.frame(Category = Telecom_8), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Age of billionaires in Telecom industry", x = "Age", y = "Frequency")
+```
+
+Each group follows a reasonably normal distribution as well. The observations in each group are independent as well.
+$\\$
+$H_0 : \mu_1 = \mu_2 = .... = \mu_18$
+$H_1 : H_0^c$
+$\alpha = 0.05$
+
+```{r}
+fit_8 <- aov(sample_df$age~sample_df$industries)
+summary(fit_8)
+```
+Since $p << \alpha$, we reject the null hypothesis. We have sufficient evidence to conclude that at least one of the equalities in the null hypothesis doesn't hold. Now we use post-hoc analysis for further investigation with bonferroni correction.
+$\\$
+$\alpha^* = \dfrac{\alpha}{\binom{18}{2}} = 0.000326$
+
+```{r}
+pairwise.t.test(sample_df$age, sample_df$industries, p.adj = "bonferroni")
+```
+From pairwise comparisons, we can see that $p < \alpha$ for the pairs Technology-Diversified, Technology-Energy, Technology-Fashion & Retail, Technology-Finance & Investments, Technology-Food & Beverage, Technology-Healthcare, Technology-Manufacturing, Technology-Media & Entertainment, and Technology-Real Estate, which means that we have sufficient evidence to conclude that the average age of billionaires in Technology industry and the average age of billionaires in majority of the other industries are significantly different.
+$\\$
+$\\$
+
+

@@ -1,0 +1,91 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+---
+title: "DSCC/CSC/STAT 462 Assignment 4"
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+subtitle: Due November 16, 2023 by 11:59 p.m.
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = T, eval=T,tidy=TRUE, tidy.opts=list(width.cutoff=60))
+```
+
+```{r}
+library(ggplot2)
+population_df <- read.csv("D:/Stats Project/Billionaires Statistics Dataset.csv")
+```
+
+```{r}
+sorted_data_desc <- population_df[order(-population_df$finalWorth), ]
+
+sorted_data_desc <- sorted_data_desc[-(1:533), ]
+# Print the sorted dataframe in descending order
+print(sorted_data_desc)
+```
+```{r}
+ggplot(data = data.frame(Category = sorted_data_desc$finalWorth), aes(x = Category)) +
+  geom_bar(fill = "lightblue", color = "black") +
+  labs(title = "Histogram of Final Worth", x = "Final Worth", y = "Frequency")
+```
+
+```{r}
+
+shuffled_data <- sorted_data_desc[sample(nrow(sorted_data_desc)), ]
+
+for (i in seq_along(shuffled_data$selfMade)) {
+  if (shuffled_data$selfMade[i] == 'True') {
+    shuffled_data$selfMade[i] <- 1
+  } else if (shuffled_data$selfMade[i] == 'False') {
+    shuffled_data$selfMade[i] <- 0
+  }
+}
+
+# Assuming 'df' is your dataframe
+shuffled_data$finalWorth <- as.numeric(shuffled_data$finalWorth)
+shuffled_data$age <- as.numeric(shuffled_data$age)
+shuffled_data$country <- as.factor(shuffled_data$country)
+
+# If multiple countries, perform one-hot encoding
+shuffled_data <- cbind(shuffled_data, model.matrix(~ country - 1, data = shuffled_data))
+
+```
+
+```{r}
+# Assuming 'df' is your dataframe with columns 'selfMade', 'finalWorth', 'age', and 'country'
+
+# Convert 'selfMade' to a factor if it's not already
+shuffled_data$selfMade <- as.factor(shuffled_data$selfMade)
+
+set.seed(123)
+train_indices <- sample(seq_len(nrow(shuffled_data)), 0.8 * nrow(shuffled_data))
+train_data <- shuffled_data[train_indices, ]
+test_data <- shuffled_data[-train_indices, ]
+
+# Fit logistic regression model
+model <- glm(selfMade ~ finalWorth + age + country, data = shuffled_data, family = "binomial")
+
+# Print a summary of the model
+summary(model)
+
+```
+```{r}
+# Assuming 'new_data' is a dataframe with the same columns as your training data
+predictions <- predict(model, newdata = test_data, type = "response")
+```
+```{r}
+# Fit logistic regression model
+model1 <- glm(selfMade ~ finalWorth + age, data = shuffled_data, family = "binomial")
+
+# Print a summary of the model
+summary(model1)
+```
+
+
