@@ -1,0 +1,9 @@
+# Force GitHub Linguist to classify RMarkdown files as R
+*.Rmd linguist-language=R
+
+# (Optional) Classify any R script files as R
+*.R linguist-language=R
+
+# Ignore data files and outputs from language stats
+*.csv linguist-detectable=false
+*.pdf linguist-detectable=false
